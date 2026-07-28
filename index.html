@@ -1,604 +1,137 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cacing Lapar - Petualangan Berburu Makanan</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Cacing Lapar</title>
 
-        body {
-            background-color: #1b2a4a;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
+<style>
+body{
+    margin:0;
+    background:#222;
+    color:white;
+    text-align:center;
+    font-family:Arial,sans-serif;
+}
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            max-width: 800px;
-            height: 100vh;
-            max-height: 500px;
-            background-color: #141e30;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-            border-radius: 16px;
-            overflow: hidden;
-            border: 2px solid #2c3e50;
-        }
+h1{
+    color:#00ff66;
+}
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+canvas{
+    background:#111;
+    border:4px solid #00ff66;
+    margin-top:10px;
+}
 
-        /* UI Overlays */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(4px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            text-align: center;
-            padding: 20px;
-        }
+#score{
+    font-size:22px;
+    margin-top:10px;
+}
+</style>
 
-        .hidden {
-            display: none !important;
-        }
-
-        /* Logo Custom Animasi */
-        .logo-container {
-            margin-bottom: 10px;
-            animation: pulse-logo 2s infinite ease-in-out;
-        }
-
-        .logo-svg {
-            width: 110px;
-            height: 110px;
-            filter: drop-shadow(0px 6px 12px rgba(46, 204, 113, 0.4));
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            color: #2ecc71;
-            text-shadow: 0 4px 10px rgba(46, 204, 113, 0.3), 2px 2px 0 #1b5e20;
-            margin-bottom: 5px;
-            letter-spacing: 2px;
-        }
-
-        p.subtitle {
-            font-size: 0.95rem;
-            color: #cbd5e1;
-            margin-bottom: 20px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 15px;
-        }
-
-        button {
-            padding: 12px 28px;
-            font-size: 1rem;
-            font-weight: 700;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
-        }
-
-        .btn-secondary {
-            background: #334155;
-            color: #f1f5f9;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-        }
-
-        /* Modal Cara Bermain */
-        .modal {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 25px;
-            max-width: 450px;
-            border: 2px solid #2ecc71;
-            box-shadow: 0 0 25px rgba(46, 204, 113, 0.2);
-        }
-
-        .modal h2 {
-            color: #2ecc71;
-            margin-bottom: 12px;
-        }
-
-        .modal ul {
-            text-align: left;
-            margin: 15px 0;
-            padding-left: 20px;
-            font-size: 0.9rem;
-            line-height: 1.7;
-            color: #e2e8f0;
-        }
-
-        /* Virtual Joystick Area */
-        #joystick-zone {
-            position: absolute;
-            bottom: 25px;
-            left: 25px;
-            width: 110px;
-            height: 110px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 50%;
-            z-index: 5;
-            touch-action: none;
-            display: none; /* Otomatis aktif di perangkat layar sentuh */
-        }
-
-        #joystick-knob {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 45px;
-            height: 45px;
-            background: rgba(46, 204, 113, 0.85);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
-        }
-
-        @keyframes pulse-logo {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-    </style>
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="gameCanvas"></canvas>
+<h1>🐍 Game Cacing Lapar</h1>
+<div id="score">Skor : 0</div>
 
-    <!-- Virtual Joystick untuk HP -->
-    <div id="joystick-zone">
-        <div id="joystick-knob"></div>
-    </div>
-
-    <!-- Main Menu Overlay -->
-    <div id="menu-overlay" class="overlay">
-        <div class="logo-container">
-            <!-- Logo Vector Cacing Lapar -->
-            <svg class="logo-svg" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="#1b5e20" stroke="#2ecc71" stroke-width="3"/>
-                <!-- Segmen Badan Cacing -->
-                <circle cx="28" cy="62" r="10" fill="#2ecc71"/>
-                <circle cx="38" cy="52" r="11" fill="#27ae60"/>
-                <circle cx="50" cy="48" r="12" fill="#2ecc71"/>
-                <circle cx="63" cy="52" r="13" fill="#27ae60"/>
-                <!-- Kepala Cacing -->
-                <circle cx="73" cy="42" r="14" fill="#2ecc71"/>
-                <!-- Mata Cacing -->
-                <circle cx="78" cy="38" r="4" fill="#fff"/>
-                <circle cx="79" cy="38" r="2" fill="#000"/>
-                <circle cx="70" cy="35" r="3" fill="#fff"/>
-                <circle cx="71" cy="35" r="1.5" fill="#000"/>
-                <!-- Apel Merah -->
-                <circle cx="30" cy="32" r="8" fill="#e74c3c"/>
-                <path d="M 30 24 Q 33 20 30 18" stroke="#795548" stroke-width="2" fill="none"/>
-            </svg>
-        </div>
-        <h1>CACING LAPAR</h1>
-        <p class="subtitle">Bantu Cacing mencari makan & tumbuh tanpa menabrak rintangan!</p>
-        
-        <div class="btn-group">
-            <button class="btn-primary" onclick="startGame()">MAIN SEKARANG</button>
-            <button class="btn-secondary" onclick="showHowToPlay()">CARA BERMAIN</button>
-        </div>
-    </div>
-
-    <!-- How To Play Overlay -->
-    <div id="howto-overlay" class="overlay hidden">
-        <div class="modal">
-            <h2>Cara Bermain</h2>
-            <ul>
-                <li><strong>PC/Laptop:</strong> Gunakan <strong>Panah / WASD / Arahkan Mouse</strong>.</li>
-                <li><strong>HP/Tablet:</strong> Gunakan <strong>Joystick Virtual</strong> di sudut kiri bawah.</li>
-                <li>Makan <strong>Apel Merah</strong> (+10 Skor) dan <strong>Makanan Emas</strong> (+30 Skor).</li>
-                <li>Hindari <strong>Batu Rintangan</strong> & <strong>Racun Hijau Tua</strong>.</li>
-                <li>Semakin tinggi Level, pergerakan cacing makin cepat dan rintangan makin bertambah!</li>
-            </ul>
-            <button class="btn-primary" onclick="hideHowToPlay()">SIAP MAIN</button>
-        </div>
-    </div>
-
-    <!-- Game Over Overlay -->
-    <div id="gameover-overlay" class="overlay hidden">
-        <h1 style="color: #e74c3c; text-shadow: 0 4px 10px rgba(231, 76, 60, 0.4);">GAME OVER!</h1>
-        <p style="margin: 8px 0; font-size: 1.1rem; color: #cbd5e1;">Cacingmu menabrak rintangan!</p>
-        <div style="background: rgba(255,255,255,0.08); padding: 15px 30px; border-radius: 12px; margin: 15px 0;">
-            <p style="font-size: 1.1rem;">Skor Akhir: <span id="final-score" style="color: #2ecc71; font-weight: bold;">0</span></p>
-            <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 5px;">Level Tercapai: <span id="final-level" style="color: #f1c40f;">1</span></p>
-            <p style="font-size: 0.9rem; color: #e2e8f0; margin-top: 5px;">Skor Tertinggi: <span id="high-score" style="color: #3498db;">0</span></p>
-        </div>
-        <button class="btn-primary" onclick="startGame()">MAIN LAGI</button>
-    </div>
-</div>
+<canvas id="game" width="400" height="400"></canvas>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-    // Resolusi Internal Canvas
-    canvas.width = 800;
-    canvas.height = 500;
+const box = 20;
 
-    // --- AUDIO SYNTHESIZER (Web Audio API) ---
-    class SoundManager {
-        constructor() {
-            this.ctx = null;
-            this.bgmInterval = null;
-        }
+let snake = [
+    {x:200,y:200}
+];
 
-        init() {
-            if (!this.ctx) {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (this.ctx.state === 'suspended') {
-                this.ctx.resume();
-            }
-        }
+let food = {
+    x:Math.floor(Math.random()*20)*box,
+    y:Math.floor(Math.random()*20)*box
+};
 
-        playEat() {
-            this.init();
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
-            
-            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-            
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.1);
-        }
+let dx = box;
+let dy = 0;
+let score = 0;
 
-        playHit() {
-            this.init();
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.35);
-            
-            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-            
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.35);
-        }
+document.addEventListener("keydown",ubahArah);
 
-        playLevelUp() {
-            this.init();
-            const notes = [330, 392, 493, 659];
-            notes.forEach((freq, index) => {
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + index * 0.08);
-                
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime + index * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + index * 0.08 + 0.12);
-                
-                osc.start(this.ctx.currentTime + index * 0.08);
-                osc.stop(this.ctx.currentTime + index * 0.08 + 0.12);
-            });
-        }
+function ubahArah(e){
 
-        startBgm() {
-            this.init();
-            if (this.bgmInterval) return;
-            const melody = [261.63, 293.66, 329.63, 349.23, 392.00, 329.63];
-            let noteIdx = 0;
-            
-            this.bgmInterval = setInterval(() => {
-                if (!gameRunning) return;
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(melody[noteIdx % melody.length], this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
-                
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.3);
-                noteIdx++;
-            }, 300);
-        }
+if(e.key=="ArrowLeft" && dx==0){
+dx=-box; dy=0;
+}
 
-        stopBgm() {
-            clearInterval(this.bgmInterval);
-            this.bgmInterval = null;
-        }
-    }
+if(e.key=="ArrowUp" && dy==0){
+dx=0; dy=-box;
+}
 
-    const sound = new SoundManager();
+if(e.key=="ArrowRight" && dx==0){
+dx=box; dy=0;
+}
 
-    // --- GAME VARIABLES ---
-    let gameRunning = false;
-    let score = 0;
-    let level = 1;
-    let highScore = localStorage.getItem('cacing_highscore') || 0;
-    let frameCount = 0;
+if(e.key=="ArrowDown" && dy==0){
+dx=0; dy=box;
+}
 
-    // Cacing (Worm Physics)
-    const worm = {
-        segments: [],
-        length: 12,
-        segmentDistance: 10,
-        radius: 12,
-        speed: 3,
-        angle: 0,
-        targetAngle: 0
-    };
+}
 
-    // Entities
-    let foods = [];
-    let obstacles = [];
-    let poisonPuddles = [];
+function gambar(){
 
-    // --- INPUT CONTROLS ---
-    const keys = {};
-    let mousePos = { x: canvas.width / 2, y: canvas.height / 2 };
+ctx.fillStyle="#111";
+ctx.fillRect(0,0,400,400);
 
-    window.addEventListener('keydown', e => keys[e.key] = true);
-    window.addEventListener('keyup', e => keys[e.key] = false);
+ctx.fillStyle="red";
+ctx.fillRect(food.x,food.y,box,box);
 
-    canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        mousePos.x = (e.clientX - rect.left) * scaleX;
-        mousePos.y = (e.clientY - rect.top) * scaleY;
-    });
+ctx.fillStyle="#00ff66";
 
-    // Touch Joystick Controls
-    const joystickZone = document.getElementById('joystick-zone');
-    const joystickKnob = document.getElementById('joystick-knob');
-    let joystickActive = false;
-    let joystickOrigin = { x: 0, y: 0 };
+snake.forEach(function(bagian){
+ctx.fillRect(bagian.x,bagian.y,box-2,box-2);
+});
 
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        joystickZone.style.display = 'block';
-    }
+let kepala={
+x:snake[0].x+dx,
+y:snake[0].y+dy
+};
 
-    joystickZone.addEventListener('touchstart', e => {
-        joystickActive = true;
-        const rect = joystickZone.getBoundingClientRect();
-        joystickOrigin = {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
-        };
-    });
+if(kepala.x==food.x && kepala.y==food.y){
 
-    window.addEventListener('touchmove', e => {
-        if (!joystickActive) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - joystickOrigin.x;
-        const dy = touch.clientY - joystickOrigin.y;
-        if (Math.hypot(dx, dy) > 5) {
-            worm.targetAngle = Math.atan2(dy, dx);
-        }
+score++;
+document.getElementById("score").innerHTML="Skor : "+score;
 
-        const dist = Math.min(Math.hypot(dx, dy), 40);
-        const angle = Math.atan2(dy, dx);
-        joystickKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`;
-    });
+food={
+x:Math.floor(Math.random()*20)*box,
+y:Math.floor(Math.random()*20)*box
+};
 
-    window.addEventListener('touchend', () => {
-        if (!joystickActive) return;
-        joystickActive = false;
-        joystickKnob.style.transform = `translate(-50%, -50%)`;
-    });
+}else{
+snake.pop();
+}
 
-    // --- GAME INITIALIZATION & GENERATION ---
-    function initWorm() {
-        worm.segments = [];
-        const startX = canvas.width / 2;
-        const startY = canvas.height / 2;
-        worm.length = 12;
-        worm.speed = 3;
-        worm.angle = 0;
-        worm.targetAngle = 0;
+if(kepala.x<0) kepala.x=380;
+if(kepala.x>380) kepala.x=0;
+if(kepala.y<0) kepala.y=380;
+if(kepala.y>380) kepala.y=0;
 
-        for (let i = 0; i < worm.length; i++) {
-            worm.segments.push({ x: startX - i * worm.segmentDistance, y: startY });
-        }
-    }
+for(let i=0;i<snake.length;i++){
+if(kepala.x==snake[i].x && kepala.y==snake[i].y){
+alert("Game Over!\nSkor: "+score);
+location.reload();
+}
+}
 
-    function spawnFood() {
-        const isGolden = Math.random() < 0.2;
-        foods.push({
-            x: Math.random() * (canvas.width - 60) + 30,
-            y: Math.random() * (canvas.height - 60) + 30,
-            radius: isGolden ? 9 : 7,
-            type: isGolden ? 'gold' : 'apple',
-            pulse: Math.random() * Math.PI
-        });
-    }
+snake.unshift(kepala);
 
-    function setupLevelEnvironment() {
-        obstacles = [];
-        poisonPuddles = [];
+}
 
-        // Jumlah Batu Rintangan berdasarkan Level
-        const rockCount = Math.min(3 + level * 2, 12);
-        for (let i = 0; i < rockCount; i++) {
-            obstacles.push({
-                x: Math.random() * (canvas.width - 120) + 60,
-                y: Math.random() * (canvas.height - 120) + 60,
-                radius: Math.random() * 12 + 15
-            });
-        }
+setInterval(gambar,120);
 
-        // Racun di level tinggi
-        if (level >= 2) {
-            const poisonCount = Math.min(level - 1, 5);
-            for (let i = 0; i < poisonCount; i++) {
-                poisonPuddles.push({
-                    x: Math.random() * (canvas.width - 140) + 70,
-                    y: Math.random() * (canvas.height - 140) + 70,
-                    radius: Math.random() * 15 + 20
-                });
-            }
-        }
+</script>
 
-        // Refill Makanan
-        foods = [];
-        for (let i = 0; i < 6; i++) spawnFood();
-    }
-
-    // --- RENDER FUNCTIONS ---
-    function drawBackground() {
-        // Lapisan Tanah / Rumput Bawah Tanah
-        let bgGradient = ctx.createRadialGradient(
-            canvas.width/2, canvas.height/2, 50,
-            canvas.width/2, canvas.height/2, 450
-        );
-        bgGradient.addColorStop(0, '#1e293b');
-        bgGradient.addColorStop(1, '#0f172a');
-        ctx.fillStyle = bgGradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Grid Organik Tanah
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-        ctx.lineWidth = 1;
-        const gridSize = 40;
-        for (let x = 0; x < canvas.width; x += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
-            ctx.stroke();
-        }
-
-        // Gambar Genangan Racun
-        poisonPuddles.forEach(p => {
-            ctx.fillStyle = 'rgba(39, 174, 96, 0.25)';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#27ae60';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        });
-
-        // Gambar Batu Rintangan
-        obstacles.forEach(obs => {
-            ctx.save();
-            ctx.fillStyle = '#475569';
-            ctx.shadowColor = '#000';
-            ctx.shadowBlur = 8;
-            ctx.beginPath();
-            ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Detail tekstur batu
-            ctx.fillStyle = '#64748b';
-            ctx.beginPath();
-            ctx.arc(obs.x - obs.radius*0.3, obs.y - obs.radius*0.3, obs.radius*0.4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        });
-    }
-
-    function drawFoods() {
-        foods.forEach(f => {
-            f.pulse += 0.05;
-            const currentRadius = f.radius + Math.sin(f.pulse) * 1.5;
-
-            ctx.save();
-            if (f.type === 'apple') {
-                // Apel Merah
-                ctx.fillStyle = '#e74c3c';
-                ctx.shadowColor = '#e74c3c';
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                ctx.arc(f.x, f.y, currentRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Tangkai Apel
-                ctx.strokeStyle = '#795548';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(f.x, f.y - currentRadius);
-                ctx.lineTo(f.x + 2, f.y - currentRadius - 4);
-                ctx.stroke();
-            } else {
-                // Makanan Emas
-                ctx.fillStyle = '#f1c40f';
-                ctx.shadowColor = '#f1c40f';
-                ctx.shadowBlur = 15;
-                ctx.beginPath();
-                ctx.arc(f.x, f.y, currentRadius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        });
-    }
-
-    function drawWorm() {
-        // Draw Segments (Dari ekor ke kepala)
-        for (let i = worm.segments.length - 1; i >= 0; i--) {
-            const seg = worm.segments[i];
-            const isHead = i === 0;
-            const segRadius = isHead
-        
-<html
+</body>
+</html>
         
