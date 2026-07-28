@@ -1,1 +1,665 @@
-test
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cacing Lapar - Petualangan Berburu Apel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #1b110b;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 480px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #2d1e18;
+            border: 3px solid #5a3d28;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* UI Overlay */
+        .ui-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 10, 8, 0.82);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #2ed573;
+            text-shadow: 3px 3px 0px #10ac84, 6px 6px 0px #000;
+            letter-spacing: 2px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #2ed573, #10ac84);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+            transition: all 0.2s ease;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 20px rgba(46, 213, 115, 0.6);
+        }
+        .how-to-play {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-top: 15px;
+            max-width: 82%;
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        /* Joystick Zone untuk Mobile */
+        #joystick-zone {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: none;
+            touch-action: none;
+            z-index: 5;
+        }
+        #joystick-knob {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 50px;
+            height: 50px;
+            background: rgba(46, 213, 115, 0.8);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        #audio-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #2ed573;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 12;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <button id="audio-toggle">🔊 Musik: ON</button>
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+
+    <!-- Overlay Menu Utama & Game Over -->
+    <div id="ui-menu" class="ui-panel">
+        <div class="logo-container">
+            <!-- Logo SVG Cacing Lapar -->
+            <svg width="65" height="65" viewBox="0 0 100 100">
+                <path d="M 10,50 Q 30,20 50,50 T 90,50" fill="none" stroke="#ff4757" stroke-width="14" stroke-linecap="round"/>
+                <path d="M 10,50 Q 30,20 50,50 T 90,50" fill="none" stroke="#2ed573" stroke-width="12" stroke-linecap="round"/>
+                <circle cx="82" cy="45" r="3" fill="#000"/>
+                <circle cx="88" cy="45" r="3" fill="#000"/>
+                <path d="M 85,52 Q 88,56 92,52" fill="none" stroke="#000" stroke-width="2"/>
+            </svg>
+            <h1 class="logo-text">CACING LAPAR</h1>
+        </div>
+        
+        <div class="how-to-play">
+            <strong>📖 Cara Bermain:</strong><br>
+            • <b>PC/Laptop:</b> Gunakan Tombol Panah atau WASD untuk mengarahkan cacing.<br>
+            • <b>HP/Tablet:</b> Sentuh & geser Virtual Joystick di pojok kiri bawah.<br>
+            • Makan <b>Apel Merah (+10 Poin)</b> & <b>Apel Emas (+30 Poin)</b>.<br>
+            • Hindari <b>Batu Rintangan, Ramuan Racun, Tembok,</b> dan <b>Badan Sendiri</b>!
+        </div>
+
+        <button id="start-btn" class="btn">Mulai Petualangan</button>
+    </div>
+
+    <!-- Joystick untuk layar sentuh -->
+    <div id="joystick-zone"><div id="joystick-knob"></div></div>
+</div>
+
+<script>
+// --- AUDIO SYNTHESIZER (Web Audio API - Tanpa File Eksternal) ---
+class SoundManager {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.muted = false;
+        this.bgmTimer = null;
+    }
+
+    playEat() {
+        if (this.muted) return;
+        let osc = this.ctx.createOscillator();
+        let gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+    }
+
+    playBonus() {
+        if (this.muted) return;
+        let osc = this.ctx.createOscillator();
+        let gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1000, this.ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.2);
+    }
+
+    playGameOver() {
+        if (this.muted) return;
+        let osc = this.ctx.createOscillator();
+        let gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(250, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.5);
+    }
+
+    startBGM() {
+        if (this.bgmTimer || this.muted) return;
+        const melody = [220, 246.94, 261.63, 293.66, 329.63]; // Melodi bernuansa petualangan
+        let step = 0;
+        this.bgmTimer = setInterval(() => {
+            if (this.muted) return;
+            let osc = this.ctx.createOscillator();
+            let gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(melody[step % melody.length], this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.25);
+            step++;
+        }, 320);
+    }
+
+    stopBGM() {
+        clearInterval(this.bgmTimer);
+        this.bgmTimer = null;
+    }
+}
+
+const audio = new SoundManager();
+
+// --- GAME SETUP ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'MENU';
+let score = 0;
+let level = 1;
+let baseSpeed = 2.5;
+
+// Worm / Cacing Configuration
+const segmentRadius = 10;
+const segmentSpacing = 12;
+
+let worm = {
+    x: 400,
+    y: 240,
+    angle: 0,
+    targetAngle: 0,
+    speed: baseSpeed,
+    body: [],
+    length: 15,
+
+    init() {
+        this.x = 400;
+        this.y = 240;
+        this.angle = 0;
+        this.targetAngle = 0;
+        this.speed = baseSpeed;
+        this.length = 15;
+        this.body = [];
+        for (let i = 0; i < this.length; i++) {
+            this.body.push({ x: this.x - i * segmentSpacing, y: this.y });
+        }
+    },
+
+    update() {
+        // Interpolasi Smooth Angle
+        let diff = this.targetAngle - this.angle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        this.angle += diff * 0.15;
+
+        // Move Head
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+
+        // Update Head Segment
+        this.body[0] = { x: this.x, y: this.y };
+
+        // Inverse Kinematics / Follower movement untuk segmen badan
+        for (let i = 1; i < this.body.length; i++) {
+            let prev = this.body[i - 1];
+            let curr = this.body[i];
+            let dx = prev.x - curr.x;
+            let dy = prev.y - curr.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist > segmentSpacing) {
+                let angle = Math.atan2(dy, dx);
+                curr.x = prev.x - Math.cos(angle) * segmentSpacing;
+                curr.y = prev.y - Math.sin(angle) * segmentSpacing;
+            }
+        }
+    },
+
+    draw() {
+        // Gambarkan Badan (Dari belakang ke depan)
+        for (let i = this.body.length - 1; i >= 0; i--) {
+            let seg = this.body[i];
+            let ratio = i / this.body.length;
+            let radius = segmentRadius * (1 - ratio * 0.3);
+
+            ctx.save();
+            ctx.translate(seg.x, seg.y);
+
+            if (i === 0) {
+                // Kepala Cacing
+                ctx.rotate(this.angle);
+                ctx.fillStyle = '#2ed573';
+                ctx.beginPath();
+                ctx.arc(0, 0, radius + 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Mata
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(4, -5, 4, 0, Math.PI * 2);
+                ctx.arc(4, 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupil
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(5, -5, 2, 0, Math.PI * 2);
+                ctx.arc(5, 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Segmen Badan Bergantian Warna (Sistem Stripes)
+                ctx.fillStyle = (i % 2 === 0) ? '#2ed573' : '#26af5f';
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Detail tekstur halus
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    },
+
+    grow(amount = 3) {
+        this.length += amount;
+        let last = this.body[this.body.length - 1];
+        for (let i = 0; i < amount; i++) {
+            this.body.push({ x: last.x, y: last.y });
+        }
+    }
+};
+
+// Item & Obstacles
+let foods = [];
+let obstacles = [];
+
+function spawnFood() {
+    const isGold = Math.random() < 0.25;
+    foods.push({
+        x: 40 + Math.random() * (canvas.width - 80),
+        y: 40 + Math.random() * (canvas.height - 80),
+        radius: isGold ? 10 : 8,
+        isGold: isGold
+    });
+}
+
+function spawnObstacles() {
+    obstacles = [];
+    const count = 3 + level * 2; // Bertambah seiring level
+    for (let i = 0; i < count; i++) {
+        let obsType = Math.random() < 0.6 ? 'rock' : 'poison';
+        obstacles.push({
+            x: 60 + Math.random() * (canvas.width - 120),
+            y: 60 + Math.random() * (canvas.height - 120),
+            radius: obsType === 'rock' ? 14 + Math.random() * 8 : 10,
+            type: obsType
+        });
+    }
+}
+
+// --- BACKGROUND & RENDER ---
+function drawBackground() {
+    // Peta Tanah / Rumput
+    ctx.fillStyle = '#2b1b17';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid Tekstur Lapangan
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    const gridSize = 40;
+    for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+    // Tembok Pembatas Atas/Bawah/Kiri/Kanan
+    ctx.strokeStyle = '#e1b12c';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+}
+
+function drawFoods() {
+    foods.forEach(f => {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        if (f.isGold) {
+            // Apel Emas
+            ctx.fillStyle = '#fbc531';
+            ctx.beginPath();
+            ctx.arc(0, 0, f.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#44bd32';
+            ctx.fillRect(-1, -f.radius - 3, 3, 4);
+        } else {
+            // Apel Merah
+            ctx.fillStyle = '#e84118';
+            ctx.beginPath();
+            ctx.arc(0, 0, f.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#44bd32';
+            ctx.fillRect(-1, -f.radius - 3, 3, 4);
+        }
+        ctx.restore();
+    });
+}
+
+function drawObstacles() {
+    obstacles.forEach(o => {
+        ctx.save();
+        ctx.translate(o.x, o.y);
+        if (o.type === 'rock') {
+            ctx.fillStyle = '#718093';
+            ctx.beginPath();
+            ctx.arc(0, 0, o.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#2f3640';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        } else {
+            // Botol Racun / Potion
+            ctx.fillStyle = '#9c88ff';
+            ctx.beginPath();
+            ctx.arc(0, 2, o.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#8c7ae6';
+            ctx.fillRect(-3, -o.radius - 2, 6, 4);
+        }
+        ctx.restore();
+    });
+}
+
+function drawHUD() {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.shadowColor = 'black';
+    ctx.shadowBlur = 4;
+    ctx.fillText(`Skor: ${score}`, 20, 35);
+    ctx.fillText(`Level: ${level}`, 20, 60);
+    ctx.shadowBlur = 0;
+}
+
+// --- LOGIKA GAME & TABRAKAN ---
+function update() {
+    if (gameState !== 'PLAYING') return;
+
+    worm.update();
+
+    // 1. Tabrakan Dinding
+    if (
+        worm.x - segmentRadius < 5 ||
+        worm.x + segmentRadius > canvas.width - 5 ||
+        worm.y - segmentRadius < 5 ||
+        worm.y + segmentRadius > canvas.height - 5
+    ) {
+        gameOver();
+        return;
+    }
+
+    // 2. Tabrakan dengan Badan Sendiri
+    for (let i = 10; i < worm.body.length; i++) {
+        let seg = worm.body[i];
+        if (Math.hypot(worm.x - seg.x, worm.y - seg.y) < segmentRadius) {
+            gameOver();
+            return;
+        }
+    }
+
+    // 3. Makan Makanan
+    foods.forEach((f, index) => {
+        if (Math.hypot(worm.x - f.x, worm.y - f.y) < segmentRadius + f.radius) {
+            if (f.isGold) {
+                score += 30;
+                worm.grow(5);
+                audio.playBonus();
+            } else {
+                score += 10;
+                worm.grow(3);
+                audio.playEat();
+            }
+            foods.splice(index, 1);
+            spawnFood();
+
+            // Kenaikan Level tiap 100 Poin
+            let newLevel = Math.floor(score / 100) + 1;
+            if (newLevel !== level) {
+                level = newLevel;
+                worm.speed = baseSpeed + (level * 0.4);
+                spawnObstacles();
+            }
+        }
+    });
+
+    // 4. Tabrakan Rintangan
+    obstacles.forEach(o => {
+        if (Math.hypot(worm.x - o.x, worm.y - o.y) < segmentRadius + o.radius) {
+            gameOver();
+        }
+    });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+    drawFoods();
+    drawObstacles();
+    worm.draw();
+    if (gameState === 'PLAYING') drawHUD();
+}
+
+function gameLoop() {
+    update();
+    draw();
+    if (gameState === 'PLAYING') {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+function startGame() {
+    score = 0;
+    level = 1;
+    gameState = 'PLAYING';
+    worm.init();
+    foods = [];
+    spawnFood();
+    spawnFood();
+    spawnObstacles();
+
+    document.getElementById('ui-menu').style.display = 'none';
+    audio.ctx.resume();
+    audio.startBGM();
+    gameLoop();
+}
+
+function gameOver() {
+    gameState = 'GAMEOVER';
+    audio.stopBGM();
+    audio.playGameOver();
+
+    const ui = document.getElementById('ui-menu');
+    ui.style.display = 'flex';
+    ui.querySelector('h1').innerText = "GAME OVER";
+    ui.querySelector('.how-to-play').innerHTML = `Skor Akhir: <b>${score}</b><br>Level Dicapai: <b>${level}</b>`;
+    document.getElementById('start-btn').innerText = "Main Lagi";
+}
+
+// --- KONTROL KEYBOARD ---
+window.addEventListener('keydown', e => {
+    if (gameState !== 'PLAYING') return;
+    switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+            worm.targetAngle = -Math.PI / 2;
+            break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+            worm.targetAngle = Math.PI / 2;
+            break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+            worm.targetAngle = Math.PI;
+            break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+            worm.targetAngle = 0;
+            break;
+    }
+});
+
+// --- KONTROL TOUCH JOYSTICK (HP/Tablet) ---
+const joystickZone = document.getElementById('joystick-zone');
+const joystickKnob = document.getElementById('joystick-knob');
+
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    joystickZone.style.display = 'block';
+}
+
+let joyCenterX = 0;
+let joyCenterY = 0;
+
+joystickZone.addEventListener('touchstart', e => {
+    const rect = joystickZone.getBoundingClientRect();
+    joyCenterX = rect.left + rect.width / 2;
+    joyCenterY = rect.top + rect.height / 2;
+});
+
+joystickZone.addEventListener('touchmove', e => {
+    e.preventDefault();
+    let touch = e.touches[0];
+    let dx = touch.clientX - joyCenterX;
+    let dy = touch.clientY - joyCenterY;
+    let dist = Math.hypot(dx, dy);
+    let maxRadius = 30;
+
+    if (dist > 0) {
+        let angle = Math.atan2(dy, dx);
+        let moveDist = Math.min(dist, maxRadius);
+        joystickKnob.style.transform = `translate(${Math.cos(angle) * moveDist}px, ${Math.sin(angle) * moveDist}px)`;
+        
+        if (gameState === 'PLAYING') {
+            worm.targetAngle = angle;
+        }
+    }
+});
+
+joystickZone.addEventListener('touchend', () => {
+    joystickKnob.style.transform = `translate(0px, 0px)`;
+});
+
+// Event Start Button & Mute Button
+document.getEle
